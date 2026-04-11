@@ -40,9 +40,41 @@
 # debug information files
 *.dwo
 
-
-# VS (.slnx)
+# --- Visual Studio ---
 .vs/
 [Bb]in/
 [Oo]bj/
+[Xx]64/
+[Xx]86/
+[Aa]rm/
+[Aa]rm64/
+Debug/
+Release/
 *.user
+*.suo
+*.sln.docstates
+*.slnx.user
+
+# --- C++ Temp files ---
+*.sdf
+*.opensdf
+*.ipch
+*.db
+*.opendb
+*.tlog
+*.log
+*.recipe
+*.lastbuildstate
+*.idb
+*.pdb
+*.ilk
+*.exe
+*.obj
+*.iobj
+*.ipdb
+
+# --- VCPKG (si tu l'utilises) ---
+vcpkg_installed/
+
+# --- Divers ---
+.DS_Store
