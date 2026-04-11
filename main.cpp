@@ -101,7 +101,7 @@ int main() {
     ImGui_ImplOpenGL3_Init("#version 330");
 
     OBJLoader loader;
-    if (!loader.load("bugatti.obj")) return -1;
+    if (!loader.load("YOURFILEHERE.obj")) return -1;
 
     unsigned int vs = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vs, 1, &vShader, NULL);
