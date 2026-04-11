@@ -2,7 +2,7 @@
 
 Single-header OBJ loader. Copy `objloader.h` and include it.
 
-Please don't use main.cpp, it's really just to try things out.
+Please don't bother using main.cpp really, it's just to try things out :)
 
 ## Usage
 
