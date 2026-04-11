@@ -5,6 +5,9 @@ Single-header OBJ loader. Copy `objloader.h` and include it.
 Please don't bother using main.cpp really, it's just to try things out :)
 
 ## Usage
+# First step
+
+Load your .obj file (for now) like in the code above to initiate the load.
 
 ```cpp
 OBJLoader loader;
