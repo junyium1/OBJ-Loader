@@ -27,13 +27,13 @@ glBufferData(GL_ELEMENT_ARRAY_BUFFER, loader.out_indices.size() * sizeof(unsigne
 
 ## Small guide
 
-`loader.out_vertices` : A vector of `Vertex`, each vertex contains its position, its UVs and its normals.
+`loader.out_vertices` : A vector of `Vertex`, each vertex contains its positions, its UVs and its normals.
 
 `loader.out_indices` : A vector of integers (`unsigned int`). They're the indices that point to the top vertices.
 
 `.size()` returns the number of elements stored in the vector.
 
-`.data()` returns a pointer to the first to the very first element of the array in the RAM.
+`.data()` returns a pointer to the very first element of the array in the RAM.
 
 
 ## Vertex
