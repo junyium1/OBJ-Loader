@@ -41,10 +41,8 @@
 *.dwo
 
 
-# Visual Studio specific
+# VS (.slnx)
 .vs/
 [Bb]in/
 [Oo]bj/
-*.user
-*.suo
-*.sln.docstates
+*.slnx.user
