@@ -19,12 +19,12 @@ struct Vertex
 struct VertexHasher 
 {
     size_t operator()(const Vertex& vertex) const {
-        size_t h = 0;
+        size_t hash = 0;
         const float* f = reinterpret_cast<const float*>(&vertex);
         for (int i = 0; i < 8; i++) {
-            h ^= std::hash<float>{}(f[i]) + 0x9e3779b9 + (h << 6) + (h >> 2);
+            hash ^= std::hash<float>{}(f[i]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
         }
-        return h;
+        return hash;
     }
 };
 
