@@ -1,3 +1,5 @@
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -65,18 +67,22 @@ const char* vShader = R"(
     layout (location = 2) in vec3 aNorm;
     uniform mat4 model, view, projection;
     out vec3 Normal;
+    out vec2 TexCoord;
     void main() {
         gl_Position = projection * view * model * vec4(aPos, 1.0);
         Normal = aNorm;
+        TexCoord = aTex;
     }
 )";
 
 const char* fShader = R"(
     #version 330 core
     in vec3 Normal;
+    in vec2 TexCoord;
     out vec4 FragColor;
+    uniform sampler2D texture1;
     void main() {
-        FragColor = vec4(normalize(Normal) * 0.5 + 0.5, 1.0);
+        FragColor = texture(texture1, TexCoord);
     }
 )";
 
@@ -102,6 +108,24 @@ int main() {
 
     OBJLoader loader;
     if (!loader.load("bugatti.obj")) return -1;
+
+    unsigned int texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    int w, h, c;
+    unsigned char* data = stbi_load("color.png", &w, &h, &c, 0);
+    if (data) {
+        GLenum format = (c == 4) ? GL_RGBA : GL_RGB;
+        glTexImage2D(GL_TEXTURE_2D, 0, format, w, h, 0, format, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    stbi_image_free(data);
 
     unsigned int vs = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vs, 1, &vShader, NULL);
@@ -159,6 +183,10 @@ int main() {
         glUniformMatrix4fv(glGetUniformLocation(prog, "projection"), 1, GL_FALSE, glm::value_ptr(proj));
         glUniformMatrix4fv(glGetUniformLocation(prog, "view"), 1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(glGetUniformLocation(prog, "model"), 1, GL_FALSE, glm::value_ptr(model));
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glUniform1i(glGetUniformLocation(prog, "texture1"), 0);
 
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, (GLsizei)loader.out_indices.size(), GL_UNSIGNED_INT, 0);
