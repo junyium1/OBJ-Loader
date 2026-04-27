@@ -66,23 +66,38 @@ const char* vShader = R"(
     layout (location = 1) in vec2 aTex;
     layout (location = 2) in vec3 aNorm;
     uniform mat4 model, view, projection;
+    out vec3 FragPos;
     out vec3 Normal;
     out vec2 TexCoord;
-    void main() {
-        gl_Position = projection * view * model * vec4(aPos, 1.0);
-        Normal = aNorm;
+
+    void main()
+    {
+        vec4 worldPos = model * vec4(aPos, 1.0);
+        gl_Position = projection * view * worldPos;
+        FragPos = vec3(worldPos);
+        Normal = mat3(transpose(inverse(model))) * aNorm;
         TexCoord = aTex;
     }
 )";
 
 const char* fShader = R"(
     #version 330 core
+    in vec3 FragPos;
     in vec3 Normal;
     in vec2 TexCoord;
     out vec4 FragColor;
     uniform sampler2D texture1;
-    void main() {
-        FragColor = texture(texture1, TexCoord);
+    uniform vec3 lightDir;
+    
+
+    void main()
+    {
+        vec3 norm  = normalize(Normal);
+        vec3 light = normalize(-lightDir);
+        float ambient = 0.3;
+        float diff = max(dot(norm, light), 0.0);
+        vec4 texColor = texture(texture1, TexCoord);
+        FragColor = vec4((ambient + diff) * texColor.rgb, texColor.a);
     }
 )";
 
@@ -107,7 +122,7 @@ int main() {
     ImGui_ImplOpenGL3_Init("#version 330");
 
     OBJLoader loader;
-    if (!loader.load("YOURFILEHERE.obj")) return -1;
+    if (!loader.load("bugatti.obj")) return -1;
 
     unsigned int texture;
     glGenTextures(1, &texture);
@@ -179,10 +194,10 @@ int main() {
         glm::mat4 proj = glm::perspective(glm::radians(fov), 1920.0f / 1080.0f, 0.1f, 1000.0f);
         glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
         glm::mat4 model = glm::mat4(1.0f);
-
         glUniformMatrix4fv(glGetUniformLocation(prog, "projection"), 1, GL_FALSE, glm::value_ptr(proj));
-        glUniformMatrix4fv(glGetUniformLocation(prog, "view"), 1, GL_FALSE, glm::value_ptr(view));
-        glUniformMatrix4fv(glGetUniformLocation(prog, "model"), 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix4fv(glGetUniformLocation(prog, "view"),       1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(glGetUniformLocation(prog, "model"),      1, GL_FALSE, glm::value_ptr(model));
+        glUniform3f(glGetUniformLocation(prog, "lightDir"), 0.0f, -1.0f, 0.0f);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
