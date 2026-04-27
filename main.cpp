@@ -66,38 +66,21 @@ const char* vShader = R"(
     layout (location = 1) in vec2 aTex;
     layout (location = 2) in vec3 aNorm;
     uniform mat4 model, view, projection;
-    out vec3 FragPos;
     out vec3 Normal;
     out vec2 TexCoord;
-
-    void main()
-    {
-        vec4 worldPos = model * vec4(aPos, 1.0);
-        gl_Position = projection * view * worldPos;
-        FragPos = vec3(worldPos);
-        Normal = mat3(transpose(inverse(model))) * aNorm;
+    void main() {
+        gl_Position = projection * view * model * vec4(aPos, 1.0);
+        Normal = aNorm;
         TexCoord = aTex;
     }
 )";
 
 const char* fShader = R"(
     #version 330 core
-    in vec3 FragPos;
     in vec3 Normal;
-    in vec2 TexCoord;
     out vec4 FragColor;
-    uniform sampler2D texture1;
-    uniform vec3 lightDir;
-    
-
-    void main()
-    {
-        vec3 norm  = normalize(Normal);
-        vec3 light = normalize(-lightDir);
-        float ambient = 0.3;
-        float diff = max(dot(norm, light), 0.0);
-        vec4 texColor = texture(texture1, TexCoord);
-        FragColor = vec4((ambient + diff) * texColor.rgb, texColor.a);
+    void main() {
+        FragColor = vec4(normalize(Normal) * 0.5 + 0.5, 1.0);
     }
 )";
 
@@ -197,8 +180,6 @@ int main() {
         glUniformMatrix4fv(glGetUniformLocation(prog, "projection"), 1, GL_FALSE, glm::value_ptr(proj));
         glUniformMatrix4fv(glGetUniformLocation(prog, "view"),       1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(glGetUniformLocation(prog, "model"),      1, GL_FALSE, glm::value_ptr(model));
-        glUniform3f(glGetUniformLocation(prog, "lightDir"), 0.0f, -1.0f, 0.0f);
-
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
         glUniform1i(glGetUniformLocation(prog, "texture1"), 0);
