@@ -25,20 +25,13 @@ struct Vertex
 
 struct VertexHasher
 {
-    size_t operator()(const Vertex& v) const {
-        size_t h = 0;
-        const float* f = v.pos; // safe base
-
-        for (int i = 0; i < 3; i++)
-            h ^= std::hash<float>{}(f[i]) + 0x9e3779b9 + (h << 6) + (h >> 2);
-
-        for (int i = 0; i < 2; i++)
-            h ^= std::hash<float>{}(v.uv[i]) + 0x9e3779b9 + (h << 6) + (h >> 2);
-
-        for (int i = 0; i < 3; i++)
-            h ^= std::hash<float>{}(v.normal[i]) + 0x9e3779b9 + (h << 6) + (h >> 2);
-
-        return h;
+    size_t operator()(const Vertex& vertex) const {
+        size_t hash = 0;
+        const float* f = reinterpret_cast<const float*>(&vertex);
+        for (int i = 0; i < 8; i++) {
+            hash ^= std::hash<float>{}(f[i]) + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+        }
+        return hash;
     }
 };
 

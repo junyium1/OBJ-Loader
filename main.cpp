@@ -107,7 +107,7 @@ int main() {
     ImGui_ImplOpenGL3_Init("#version 330");
 
     OBJLoader loader;
-    if (!loader.load("bugatti.obj")) return -1;
+    if (!loader.load("YOURFILEHERE.obj")) return -1;
 
     unsigned int texture;
     glGenTextures(1, &texture);
