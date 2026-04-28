@@ -103,8 +103,9 @@ const char* fShaderMTL = R"(
     in vec3 Normal;
     out vec4 FragColor;
     uniform vec3 diffuseColor;
+    uniform vec3 lightDir;
     void main() {
-        float lighting = max(dot(normalize(Normal), normalize(vec3(0.5,1,0.5))), 0.2);
+        float lighting = max(dot(normalize(Normal), normalize(-lightDir)), 0.2);
         FragColor = vec4(diffuseColor * lighting, 1.0);
     }
 )";
@@ -187,6 +188,8 @@ int main() {
         ImGui::RadioButton("Normales", &displayMode, 0); ImGui::SameLine();
         ImGui::RadioButton("Texture color.png", &displayMode, 1); ImGui::SameLine();
         ImGui::RadioButton("MTL", &displayMode, 2);
+        static float lightDirArr[3] = { 0.0f, -1.0f, 0.0f };
+        if (displayMode == 2) ImGui::SliderFloat3("LightDir", lightDirArr, -1.0f, 1.0f);
         ImGui::End();
 
         // Selection du shader selon le mode
@@ -224,8 +227,8 @@ int main() {
             glUniform1i(glGetUniformLocation(prog, "texture1"), 0);
         }
         if (displayMode == 2) {
-            // Couleur diffuse issue du MTL
             glUniform3f(glGetUniformLocation(prog, "diffuseColor"), loader.diffuseColor.x, loader.diffuseColor.y, loader.diffuseColor.z);
+            glUniform3f(glGetUniformLocation(prog, "lightDir"), lightDirArr[0], lightDirArr[1], lightDirArr[2]);
         }
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, (GLsizei)loader.out_indices.size(), GL_UNSIGNED_INT, 0);
