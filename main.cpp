@@ -17,6 +17,7 @@ glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
 float yaw = -90.0f, pitch = 0.0f, fov = 45.0f, deltaTime = 0.0f, lastFrame = 0.0f;
 float lastX = 960, lastY = 540;
 bool firstMouse = true;
+int displayMode = 0;
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
     fov -= (float)yoffset;
@@ -75,12 +76,36 @@ const char* vShader = R"(
     }
 )";
 
-const char* fShader = R"(
+// Fragment shader pour l'affichage des normales
+const char* fShaderNormal = R"(
     #version 330 core
     in vec3 Normal;
     out vec4 FragColor;
     void main() {
         FragColor = vec4(normalize(Normal) * 0.5 + 0.5, 1.0);
+    }
+)";
+
+// Fragment shader pour l'affichage de la texture color.png
+const char* fShaderTexture = R"(
+    #version 330 core
+    in vec2 TexCoord;
+    out vec4 FragColor;
+    uniform sampler2D texture1;
+    void main() {
+        FragColor = texture(texture1, TexCoord);
+    }
+)";
+
+// Fragment shader pour l'affichage du MTL (simple, couleur diffuse)
+const char* fShaderMTL = R"(
+    #version 330 core
+    in vec3 Normal;
+    out vec4 FragColor;
+    uniform vec3 diffuseColor;
+    void main() {
+        float lighting = max(dot(normalize(Normal), normalize(vec3(0.5,1,0.5))), 0.2);
+        FragColor = vec4(diffuseColor * lighting, 1.0);
     }
 )";
 
@@ -128,12 +153,6 @@ int main() {
     unsigned int vs = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vs, 1, &vShader, NULL);
     glCompileShader(vs);
-    unsigned int fs = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fs, 1, &fShader, NULL);
-    glCompileShader(fs);
-    unsigned int prog = glCreateProgram();
-    glAttachShader(prog, vs); glAttachShader(prog, fs);
-    glLinkProgram(prog);
 
     unsigned int VAO, VBO, EBO;
     glGenVertexArrays(1, &VAO); glGenBuffers(1, &VBO); glGenBuffers(1, &EBO);
@@ -165,8 +184,27 @@ int main() {
         ImGui::Text("Hold Right Click to rotate");
         ImGui::SliderFloat3("Camera Pos", &cameraPos.x, -50.0f, 50.0f);
         ImGui::SliderFloat("FOV", &fov, 1.0f, 90.0f);
+        ImGui::RadioButton("Normales", &displayMode, 0); ImGui::SameLine();
+        ImGui::RadioButton("Texture color.png", &displayMode, 1); ImGui::SameLine();
+        ImGui::RadioButton("MTL", &displayMode, 2);
         ImGui::End();
 
+        // Selection du shader selon le mode
+        unsigned int fs, prog;
+        if (displayMode == 0) {
+            fs = glCreateShader(GL_FRAGMENT_SHADER);
+            glShaderSource(fs, 1, &fShaderNormal, NULL);
+        } else if (displayMode == 1) {
+            fs = glCreateShader(GL_FRAGMENT_SHADER);
+            glShaderSource(fs, 1, &fShaderTexture, NULL);
+        } else {
+            fs = glCreateShader(GL_FRAGMENT_SHADER);
+            glShaderSource(fs, 1, &fShaderMTL, NULL);
+        }
+        glCompileShader(fs);
+        prog = glCreateProgram();
+        glAttachShader(prog, vs); glAttachShader(prog, fs);
+        glLinkProgram(prog);
         glUseProgram(prog);
         glm::vec3 dir;
         dir.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
@@ -180,12 +218,19 @@ int main() {
         glUniformMatrix4fv(glGetUniformLocation(prog, "projection"), 1, GL_FALSE, glm::value_ptr(proj));
         glUniformMatrix4fv(glGetUniformLocation(prog, "view"),       1, GL_FALSE, glm::value_ptr(view));
         glUniformMatrix4fv(glGetUniformLocation(prog, "model"),      1, GL_FALSE, glm::value_ptr(model));
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture);
-        glUniform1i(glGetUniformLocation(prog, "texture1"), 0);
-
+        if (displayMode == 1) {
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, texture);
+            glUniform1i(glGetUniformLocation(prog, "texture1"), 0);
+        }
+        if (displayMode == 2) {
+            // Couleur diffuse issue du MTL
+            glUniform3f(glGetUniformLocation(prog, "diffuseColor"), loader.diffuseColor.x, loader.diffuseColor.y, loader.diffuseColor.z);
+        }
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, (GLsizei)loader.out_indices.size(), GL_UNSIGNED_INT, 0);
+        glDeleteShader(fs);
+        glDeleteProgram(prog);
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

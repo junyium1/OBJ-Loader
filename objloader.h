@@ -40,6 +40,7 @@ class OBJLoader
 public:
     std::vector<Vertex> out_vertices;
     std::vector<unsigned int> out_indices;
+    glm::vec3 diffuseColor = glm::vec3(0.0f, 0.2f, 0.8f); // Par défaut bleu Bugatti
 
     bool load(const std::string& path)
     {
@@ -52,6 +53,36 @@ public:
         std::unordered_map<Vertex, unsigned int, VertexHasher> uniqueVertices;
 
         std::string line;
+        std::string mtlFile;
+
+        // Première passe pour trouver le mtllib
+        file.clear();
+        file.seekg(0, std::ios::beg);
+        while (std::getline(file, line)) {
+            if (line.rfind("mtllib ", 0) == 0) {
+                mtlFile = line.substr(7);
+                break;
+            }
+        }
+        // Lecture du MTL si trouvé
+        if (!mtlFile.empty()) {
+            // Récupère le dossier du .obj
+            std::string objDir = path.substr(0, path.find_last_of("/\\") + 1);
+            std::ifstream mtl(objDir + mtlFile);
+            if (mtl.is_open()) {
+                std::string mline;
+                while (std::getline(mtl, mline)) {
+                    if (mline.rfind("Kd ", 0) == 0) {
+                        float r, g, b;
+                        if (sscanf_s(mline.c_str(), "Kd %f %f %f", &r, &g, &b) == 3) {
+                            diffuseColor = glm::vec3(r, g, b);
+                        }
+                    }
+                }
+            }
+        }
+        file.clear();
+        file.seekg(0, std::ios::beg);
 
         while (std::getline(file, line))
         {
